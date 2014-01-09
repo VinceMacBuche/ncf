@@ -1,0 +1,16 @@
+# @name postgres_install 
+# @description This technique will check install postgresql and check if it runs.
+# @version 1.0
+#
+bundle agent postgres_install
+{
+
+  methods:
+    any::
+      "install" usebundle => package_install("postgresql");
+    package_install_postgresql_kept::
+      "check_run" usebundle => service_ensure_running("postgresql");
+    package_install_postgresql_repaired::
+      "restart" usebundle => service_restart("postgresql");
+
+}
