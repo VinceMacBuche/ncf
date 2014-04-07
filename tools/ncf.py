@@ -171,7 +171,7 @@ def parse_technique_methods(technique_file):
         if attribute['lval'] == 'usebundle':
           if attribute['rval']['type'] == 'functionCall':
             method_name = attribute['rval']['name']
-            args = [arg['value'] for arg in attribute['rval']['arguments']]
+            args = [ arg['value'] for arg in attribute['rval']['arguments']]
           if attribute['rval']['type'] == 'string':
             method_name = attribute['rval']['value']
 
