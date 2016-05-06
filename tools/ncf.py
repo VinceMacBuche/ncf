@@ -16,6 +16,7 @@ import shutil
 import sys
 import os
 import codecs
+import ncf_constraints
 
 # Additionnal path to look for cf-promises
 additional_path = ["/opt/rudder/bin","/usr/sbin","/usr/local"]
@@ -29,7 +30,7 @@ tags = {}
 tags["common"] = ["bundle_name", "bundle_args"]
 tags["generic_method"] = ["name", "description", "documentation", "parameter", "class_prefix", "class_parameter", "class_parameter_id", "deprecated", "agent_version"]
 tags["technique"] = ["name", "description", "version"]
-optionnal_tags = [ "deprecated", "documentation" ]
+optionnal_tags = [ "deprecated", "documentation", "parameter_constraint" ]
 multiline_tags = [ "description", "documentation" ]
 
 class NcfError(Exception):
@@ -137,6 +138,7 @@ def parse_generic_method_metadata(technique_content):
 def parse_bundlefile_metadata(content, bundle_type):
   res = {}
   parameters = []
+  param_constraints = []
   multiline = False
   previous_tag = None
 
@@ -153,6 +155,9 @@ def parse_bundlefile_metadata(content, bundle_type):
         # tag "parameter" may be multi-valued
         if tag == "parameter":
           parameters.append({'name': match.group(3), 'description': match.group(4)})
+        if tag == "parameter_constraint":
+          constraint = json.loads("{" + match.group(4)+ "}")
+          param_constraints.append({'name': match.group(3), 'constraint': constraint})
         else:
           res[tag] = match.group(2)
         previous_tag = tag
@@ -200,6 +205,12 @@ def parse_bundlefile_metadata(content, bundle_type):
 
   # If we found any parameters, store them in the res object
   if len(parameters) > 0:
+    if len(param_constraints) > 0:
+      for param in parameters:
+# dict((k,v) for d in L for (k,v) in d.items())
+        constraints = dict( (k,v) for constraint in param_constraints if constraint["name"] == param["name"] for (k,v) in constraint["constraint"].iteritems() ) 
+        print(constraints)
+        param["constraints"] = constraints
     res['parameter'] = parameters
 
   if bundle_type == "generic_method" and not "agent_version" in res:
@@ -523,7 +534,7 @@ def get_all_generic_methods_metadata(alt_path = ''):
       errors.append(error)
       continue # skip this file, it doesn't have the right tags in - yuk!
 
-  return { "data": all_metadata, "errors": format_errors(errors) }
+  return { "data": { "generic_methods" : all_metadata, "constraints" : ncf_constraints.string_constraints }, "errors": format_errors(errors) }
 
 
 def write_technique(technique_metadata, alt_path = ""):
