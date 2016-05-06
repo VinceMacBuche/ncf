@@ -321,7 +321,7 @@
                                   </h5>
                                 </label>
                                 <br style="clear:both"/>
-                                <textarea msd-elastic name="param" class="form-control" rows="1" ng-required="true" id="param-{{$index}}" ng-model="parameter.value" placeholder="" ng-maxlength="2048"></textarea>
+                                <textarea paramconstraint constraint="parameter.constraints" msd-elastic name="param" class="form-control" rows="1" ng-required="true" id="param-{{$index}}" ng-model="parameter.value" placeholder="" ng-maxlength="2048"></textarea>
                                 <span class="text-danger" ng-show="paramForm.param.$error.maxlength">
                                   Fields over 2048 characters are currently not supported. Please insert your content into a file, and copy it with a file_copy_* method, or use a template.
                                 </span>
