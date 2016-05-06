@@ -22,6 +22,7 @@
 # @parameter file File name to edit
 # @parameter keys Array containing the keys (keys of the array), and values to define (values of the array)
 # @parameter separator Separator between key and value (for example "=" or " ")
+# @constraint separator "allow_whitespace_string" : true 
 #
 # @class_prefix file_ensure_keys_values
 # @class_parameter file
