@@ -205,12 +205,12 @@ def parse_bundlefile_metadata(content, bundle_type):
 
   # If we found any parameters, store them in the res object
   if len(parameters) > 0:
-    if len(param_constraints) > 0:
-      for param in parameters:
-# dict((k,v) for d in L for (k,v) in d.items())
+    for param in parameters:
+      constraints = {}
+      if len(param_constraints) > 0:
         constraints = dict( (k,v) for constraint in param_constraints if constraint["name"] == param["name"] for (k,v) in constraint["constraint"].iteritems() ) 
-        print(constraints)
-        param["constraints"] = constraints
+      param["constraints"] = constraints
+    
     res['parameter'] = parameters
 
   if bundle_type == "generic_method" and not "agent_version" in res:
@@ -444,7 +444,7 @@ def canonify_class_context(class_context):
   return regex.sub(r'",canonify("\1"),"', class_context)
 
 
-def generate_technique_content(technique_metadata):
+def generate_technique_content(technique_metadata, methods):
   """Generate technique CFEngine file as string from its metadata"""
 
   technique = add_default_values_technique_metadata(technique_metadata)
@@ -464,9 +464,16 @@ def generate_technique_content(technique_metadata):
 
   # Handle method calls
   for method_call in technique["method_calls"]:
+    method_name = method_call["method_name"]
     regex = re.compile(r'(?<!\\)"', flags=re.UNICODE )
     # Treat each argument of the method_call
     if 'args' in method_call:
+      for index, arg in enumerate(method_call['args']):
+        parameter = methods[method_name]["parameter"][index]
+        arg_constraint = parameter.get("constraints", {})
+        check = ncf_constraints.check(arg, arg_constraint)
+        if not check:
+          raise NcfError("Invalid value for parameter '"+ parameter["name"] +"' of method '"+ method_name +"' in technique '"+ technique['bundle_name'] +"', invalid value is '"+ arg+"'")
       args = ['"%s"'%regex.sub(r'\\"', arg) for arg in method_call['args'] ]
       arg_value = ', '.join(args)
     else:
@@ -545,7 +552,7 @@ def write_technique(technique_metadata, alt_path = ""):
     path = alt_path
 
   try:
-    
+    methods= get_all_generic_methods_metadata(alt_path)["data"]["generic_methods"]    
     # Check if file exists
     bundle_name = technique_metadata['bundle_name']
     filename = os.path.realpath(os.path.join(path, "50_techniques", bundle_name, bundle_name+".cf"))
@@ -564,7 +571,7 @@ def write_technique(technique_metadata, alt_path = ""):
     execute_hooks("pre", action, path, bundle_name)
 
     # Write technique file
-    content = generate_technique_content(technique_metadata)
+    content = generate_technique_content(technique_metadata, methods)
     with codecs.open(filename, "w", encoding="utf-8") as fd:
       fd.write(content)
 
