@@ -212,7 +212,7 @@
                                 </small>
                               </h4>
                               <div ng-form="arg_method" ng-repeat="parameter in method_call.parameters  track by $index">
-                                <input ng-hide="true" type="text" ng-model="parameter.value" required ></input>
+                                <input ng-hide="true" type="text" ng-model="parameter.value" paramconstraint constraint="parameter.constraints" ></input>
                                 <br style="clear:both" ng-if="arg_method.$invalid"/>
                                 <h5 ng-if="arg_method.$invalid" class=" pull-left method-margin text-danger">
                                   Empty value in '{{parameter.name}}'
@@ -298,7 +298,7 @@
                                 {{parameter.description}}
                           </small></h5></label>
                               <br style="clear:both"/>
-                              <textarea paramconstraint constraint="parameter.constraints" name="param" class="form-control" rows="1"  id="param-{{$index}}" ng-model="parameter.value" ng-pattern="matchingParen" placeholder=""></textarea>
+                              <textarea paramconstraint constraint="parameter.constraints" name="param" msd-elastic ng-trim="false" class="form-control" rows="1"  id="param-{{$index}}" ng-model="parameter.value" placeholder=""></textarea>
                             </div>
                           </form>
                         </accordion-group>

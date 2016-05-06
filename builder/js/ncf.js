@@ -54,29 +54,27 @@ app.directive('paramconstraint', function($filter) {
     require: 'ngModel',
     link: function(scope, elm, attrs, ctrl) {
       ctrl.$validators.paramConstraint = function(modelValue, viewValue) {
-        console.log(scope.constraint)
-
+        if (modelValue === undefined)
+          return false
         var allow_empty = scope.constraint["allow_empty_string"]
         var allow_whitespace = scope.constraint["allow_whitespace_string"]
-        console.log(scope.$parent)
         var constraints = scope.$parent.constraints
-        var exp = undefined;
+        var string_constraint = "default";
         if (allow_empty) {
           if (allow_whitespace) {
-            exp = new RegExp(constraints["all"], "gm");
+            string_constraint =  "all";
           } else {
-            exp = new RegExp(constraints["allow_empty_string"], "gm");
+            string_constraint = "allow_empty_string"
           }
             
         } else {
           if (allow_whitespace) {
-            exp = new RegExp(constraints["allow_whitespace_string"], "gm");
-          } else {
-            exp = new RegExp(constraints["default"], "gm");
+            string_constraint = "allow_whitespace_string"
           }
         }
-        console.log(exp)
-        return exp.test(modelValue)
+        var exp = new RegExp(constraints[string_constraint], "gm")
+        var result= exp.test(modelValue)
+        return result
       };
     }
   };
@@ -139,7 +137,7 @@ app.controller('ncf-builder', function ($scope, $modal, $http, $log, $location, 
     }
   };
 
-  $scope.matchingParen = new RegExp('^\\w*((\\$\\(.*\\))|(\\$\\{.*\\}))*\\w*$', "gm")
+  $scope.matchingParen = '^\\w*((\\$\\(.*\\))|(\\$\\{.*\\}))*\\w*$'
   // Callback when an element is dropped on the list of method calls
   // return the element that will be added, if false do not add anything
   $scope.dropCallback = function(elem, nextIndex, type){
