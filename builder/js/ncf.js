@@ -46,6 +46,43 @@ app.directive('techniquename', function($filter) {
   };
 });
 
+app.directive('paramconstraint', function($filter) {
+  return {
+    scope: {
+      constraint: '='
+    },
+    require: 'ngModel',
+    link: function(scope, elm, attrs, ctrl) {
+      ctrl.$validators.paramConstraint = function(modelValue, viewValue) {
+        console.log(scope.constraint)
+
+        var allow_empty = scope.constraint["allow_empty_string"]
+        var allow_whitespace = scope.constraint["allow_whitespace_string"]
+        console.log(scope.$parent)
+        var constraints = scope.$parent.constraints
+        var exp = undefined;
+        if (allow_empty) {
+          if (allow_whitespace) {
+            exp = new RegExp(constraints["all"], "gm");
+          } else {
+            exp = new RegExp(constraints["allow_empty_string"], "gm");
+          }
+            
+        } else {
+          if (allow_whitespace) {
+            exp = new RegExp(constraints["allow_whitespace_string"], "gm");
+          } else {
+            exp = new RegExp(constraints["default"], "gm");
+          }
+        }
+        console.log(exp)
+        return exp.test(modelValue)
+      };
+    }
+  };
+});
+
+
 app.directive('showErrors', function() {
   return {
     restrict: 'A',
@@ -102,6 +139,7 @@ app.controller('ncf-builder', function ($scope, $modal, $http, $log, $location, 
     }
   };
 
+  $scope.matchingParen = new RegExp('^\\w*((\\$\\(.*\\))|(\\$\\{.*\\}))*\\w*$', "gm")
   // Callback when an element is dropped on the list of method calls
   // return the element that will be added, if false do not add anything
   $scope.dropCallback = function(elem, nextIndex, type){
@@ -251,7 +289,8 @@ app.controller('ncf-builder', function ($scope, $modal, $http, $log, $location, 
     var data = {params: {path: $scope.path}}
     $http.get('/ncf/api/generic_methods', data).
       success(function(data, status, headers, config) {
-        $scope.generic_methods = data.data;
+        $scope.generic_methods = data.data.generic_methods;
+        $scope.constraints = data.data.constraints;
         $scope.methodsByCategory = $scope.groupMethodsByCategory();
         $scope.authenticated = true;
         // Once we have our methods we can fetch our techniques which depends on them
@@ -520,6 +559,7 @@ app.controller('ncf-builder', function ($scope, $modal, $http, $log, $location, 
          // Maybe parameter does not exists in current method_call, replace with empty value
          param_value = param_value !== undefined ? param_value : '';
          parameter["value"] = param_value;
+         console.log(parameter.constraints)
          params.push(parameter);
       }
     } else {
