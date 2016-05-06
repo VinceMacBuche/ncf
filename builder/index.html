@@ -222,7 +222,7 @@
                                 </small>
                               </h4>
                               <div ng-form="arg_method" ng-repeat="parameter in method_call.parameters  track by $index">
-                                <input ng-hide="true" type="text" ng-model="parameter.value" required ></input>
+                                <input ng-hide="true" type="text" ng-model="parameter.value" paramconstraint constraint="parameter.constraints" ></input>
                                 <br style="clear:both" ng-if="arg_method.$invalid"/>
                                 <h5 ng-if="arg_method.$invalid" class=" pull-left method-margin text-danger">
                                   Empty value in '{{parameter.name}}'
@@ -321,7 +321,7 @@
                                   </h5>
                                 </label>
                                 <br style="clear:both"/>
-                                <textarea paramconstraint constraint="parameter.constraints" msd-elastic name="param" class="form-control" rows="1" ng-required="true" id="param-{{$index}}" ng-model="parameter.value" placeholder="" ng-maxlength="2048"></textarea>
+                                <textarea paramconstraint constraint="parameter.constraints" msd-elastic name="param" class="form-control" rows="1" ng-required="true" id="param-{{$index}}" ng-trim="false" ng-model="parameter.value" placeholder="" ng-maxlength="2048"></textarea>
                                 <span class="text-danger" ng-show="paramForm.param.$error.maxlength">
                                   Fields over 2048 characters are currently not supported. Please insert your content into a file, and copy it with a file_copy_* method, or use a template.
                                 </span>
