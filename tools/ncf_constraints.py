@@ -14,29 +14,29 @@ else:
 
 ### Constraint checking function
 
-def from_list( parameter, accepted_result):
-  return parameter in accepted_result
+def from_list( parameter_value, accepted_result):
+  return parameter_value in accepted_result
 
-def max_length( parameter, max_size):
-  return len(parameter) <= max_size
+def max_length( parameter_value, max_size):
+  return len(parameter_value) <= max_size
 
-def min_length( parameter, min_size):
-  return len(parameter) >= min_size
+def min_length( parameter_value, min_size):
+  return len(parameter_value) >= min_size
 
-def match_regex(parameter, regex):
-  match = re.search(regex, parameter)
+def match_regex(parameter_value, regex):
+  match = re.match(regex, parameter_value, re.U)
   return match is not None
 
-def not_match_regex(parameter, regex):
-  return not match_regex(parameter, regex)
+def not_match_regex(parameter_value, regex):
+  return not match_regex(parameter_value, regex)
 
-def allow_empty_string(parameter, allow):
+def allow_empty_string(parameter_value, allow):
   # If empty strings are not allowed, and we have one, this is an error
-  return allow or not_match_regex(parameter, "^$")
+  return allow or min_length(parameter_value,1)
 
-def allow_whitespace_string(parameter, allow):
+def allow_whitespace_string(parameter_value, allow):
   # If leading/trailing whitespace is not allowed, and we have some, this is an error
-  return allow or ( not_match_regex(parameter, r'^\s') and not_match_regex(parameter, r'\s$') )
+  return allow or ( not_match_regex(parameter_value, r'^\s') and not_match_regex(parameter_value, r'.*\s$') )
 
 
 constraints = {
@@ -71,21 +71,33 @@ constraints = {
     }
 }
 
+variable_constraints = {
+  "max_length" : constraints["max_length"]
+}
+
 default_constraint = {
     "allow_whitespace_string" : False
   , "allow_empty_string" : False
 }
 
-def check_parameter(parameter, parameter_constraints):
-  """Checks that a parameter is ok with the constraint passed as parameter"""
+def check_parameter(parameter_value, parameter_constraints):
+  """Checks that a parameter value is ok with the constraint of the parameter"""
 
   result = True
   errors = []
+  constraint_set = constraints
+
+  # Check that our value contains a variable or not
+  value_without_variables = re.sub(r'[\$@][\{\(][a-zA-Z0-9\[\]_.-]+[\}\)]', "", parameter_value)
+  if parameter_value != value_without_variables:
+    constraint_set = variable_constraints
+    parameter_value = value_without_variables
+
 
   for (constraint_name, constraint_value) in parameter_constraints.iteritems():
-    if constraint_name in constraints:
-      constraint = constraints[constraint_name]
-      if not constraint['check'](parameter,constraint_value):
+    if constraint_name in constraint_set:
+      constraint = constraint_set[constraint_name]
+      if not constraint['check'](parameter_value,constraint_value):
         result = False
         errors.append(constraint_name)
 
