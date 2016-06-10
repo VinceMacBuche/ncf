@@ -6,6 +6,7 @@ import shutil
 import sys
 import os
 import codecs
+from pprint import pprint
 
 if sys.version_info < (3,):
   string_type = unicode
@@ -14,34 +15,59 @@ else:
 
 ### Constraint checking function
 
-def from_list( parameter_value, accepted_result):
-  return parameter_value in accepted_result
+# Helper function on constraint check return
+def return_constraint(result, error_message):
+  if result:
+    return None
+  else:
+    return error_message
+
+def select( parameter_value, accepted_result):
+  result = parameter_value in accepted_result
+  error_message = "Value not in accepted values: "+ str(accepted_result)
+  return return_constraint(result, error_message)
 
 def max_length( parameter_value, max_size):
-  return len(parameter_value) <= max_size
+  current_length = len(parameter_value)
+  result = current_length <= max_size
+  error_message = "Max length is " + str(max_size) + ". Current size is " + str(current_length)
+  return return_constraint(result, error_message)
 
 def min_length( parameter_value, min_size):
-  return len(parameter_value) >= min_size
+  current_length = len(parameter_value)
+  result = current_length >= min_size
+  error_message = "Min length is " + str(min_size) + ". Current size is " + str(current_length)
+  return return_constraint(result, error_message)
 
 def match_regex(parameter_value, regex):
-  match = re.match(regex, parameter_value, re.U)
-  return match is not None
+  match = re.search(regex, parameter_value, re.U)
+  result = match is not None
+  error_message = "Must match regex "+ regex
+  return return_constraint(result, error_message)
 
 def not_match_regex(parameter_value, regex):
-  return not match_regex(parameter_value, regex)
+  result = match_regex(parameter_value, regex) is not None
+  error_message = "Must not match regex "+ regex
+  return return_constraint(result, error_message)
 
 def allow_empty_string(parameter_value, allow):
-  # If empty strings are not allowed, and we have one, this is an error
-  return allow or min_length(parameter_value,1)
+  # If length more that one, this is an error
+  result = allow or min_length(parameter_value,1) is None
+  error_message = "Must not be empty"
+  return return_constraint(result, error_message)
 
 def allow_whitespace_string(parameter_value, allow):
   # If leading/trailing whitespace is not allowed, and we have some, this is an error
-  return allow or ( not_match_regex(parameter_value, r'^\s') and not_match_regex(parameter_value, r'.*\s$') )
+  not_leading = not_match_regex(parameter_value, r'^\s') is None
+  not_trailing = not_match_regex(parameter_value, r'\s$') is None
+  result = allow or ( not_leading and not_trailing )
+  error_message = "Must not have leading or trailing whitespaces"
+  return return_constraint(result, error_message)
 
 
 constraints = {
     "select" : {
-        "check" : from_list
+        "check" : select
       , "type"  : list
     }
   , "allow_whitespace_string" : {
@@ -97,9 +123,10 @@ def check_parameter(parameter_value, parameter_constraints):
   for (constraint_name, constraint_value) in parameter_constraints.iteritems():
     if constraint_name in constraint_set:
       constraint = constraint_set[constraint_name]
-      if not constraint['check'](parameter_value,constraint_value):
+      constraint_check = constraint['check'](parameter_value,constraint_value)
+      if constraint_check is not None:
         result = False
-        errors.append(constraint_name)
+        errors.append(constraint_check)
 
   check = {'result': result, 'errors': errors}
   return check
