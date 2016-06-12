@@ -46,35 +46,21 @@ app.directive('techniquename', function($filter) {
   };
 });
 
-app.directive('paramconstraint', function($filter) {
+app.directive('paramconstraint', function($filter, $http) {
   return {
     scope: {
       constraint: '='
     },
     require: 'ngModel',
     link: function(scope, elm, attrs, ctrl) {
-      ctrl.$validators.paramConstraint = function(modelValue, viewValue) {
+      ctrl.$asyncValidators.paramConstraint = function(modelValue, viewValue) {
         if (modelValue === undefined)
           return false
-        var allow_empty = scope.constraint["allow_empty_string"]
-        var allow_whitespace = scope.constraint["allow_whitespace_string"]
         var constraints = scope.$parent.constraints
-        var string_constraint = "default";
-        if (allow_empty) {
-          if (allow_whitespace) {
-            string_constraint =  "all";
-          } else {
-            string_constraint = "allow_empty_string"
-          }
-            
-        } else {
-          if (allow_whitespace) {
-            string_constraint = "allow_whitespace_string"
-          }
-        }
-        var exp = new RegExp(constraints[string_constraint], "gm")
-        var result= exp.test(modelValue)
-        return result
+        var data = {"value" : modelValue, "constraints" : constraints}
+
+        $http.post("/ncf/api/check/parameter",data).success(function(result) { console.log(result)})
+        return true
       };
     }
   };
