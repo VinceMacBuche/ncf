@@ -5,6 +5,7 @@ import requests
 import os
 import sys
 import traceback
+from pprint import pprint
 
 # Add NCF_TOOLS_DIR to sys.path so we can access ncf module
 NCF_TOOLS_DIR = '/usr/share/ncf/tools'
@@ -13,6 +14,7 @@ sys.path[0:0] = [NCF_TOOLS_DIR]
 default_path = ""
 
 import ncf
+import ncf_constraints
 
 def format_error(exception, when, code):
   if not isinstance(exception, ncf.NcfError):
@@ -180,7 +182,10 @@ def check_parameter():
     # We need to get path from url params, if not present put "" as default value
     check = ncf_constraints.check_parameter(parameter_value,parameter_constraints)
     resp = jsonify( check )
-    return resp
+    code = 200
+    if not check["result"]:
+      code = 400
+    return resp, code
   except Exception as e:
     return format_error(e, "checking parameter", 500)
 
