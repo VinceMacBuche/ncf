@@ -224,12 +224,14 @@
                               </h4>
                               <div ng-form="arg_method" ng-repeat="parameter in method_call.parameters  track by $index">
                                 <input ng-hide="true" type="text" name="param" ng-model="parameter.value" constraint parameter="parameter" ></input>
-                                <div ng-messages="arg_method.param.$error" >
-                                <h5 class="text-danger" ng-message="constraint">
-                                  Invalid constraint for parameter: '{{parameter.name}}'
-                                </h5>
-                                </div>
+                                <ng-messages for="arg_method.param.$error" multiple />
+                                  <h5 class="text-danger" ng-message="constraint">
+                                    <br style="clear:both"/>
+                                    Invalid constraint for parameter: '{{parameter.name}}'
+                                  </h5>
+                                </ng-messages>
                               </div>
+                              <br style="clear:both" ng-if="getClassParameter(method_call) !== undefined"/>
                               <h5 class="pull-left method-param" >
                                   {{getClassParameter(method_call)}}
                               </h5>
