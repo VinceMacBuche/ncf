@@ -18,6 +18,9 @@ import sys
 import re
 import codecs
 import traceback
+import xml.etree.ElementTree
+import xml.dom.minidom
+from xml.etree.ElementTree import ElementTree
 from pprint import pprint
 
 # MAIN FUNCTIONS called by command line parsing
@@ -45,6 +48,7 @@ def convert_one_to_dsc(destination_path, bundle_name):
     try:
       metadata = techniques[bundle_name]
       write_dsc_technique(metadata, methods)
+      update_technique_metadata(metadata)
     except Exception as e:
       sys.stderr.write("Error: Unable to create Rudder Technique files related to ncf Technique "+bundle_name+" (" + str(e) + ")\n")
       sys.stderr.write(traceback.format_exc())
@@ -129,6 +133,27 @@ def get_ps1_content(technique_metadata, generic_methods):
  
 
   return "\n".join(content) + "\n"
+
+def update_technique_metadata(technique_metadata):
+  def prettify(elem):
+    rough_string = xml.etree.ElementTree.tostring(elem, 'utf-8')
+    print(rough_string)
+    reparsed = xml.dom.minidom.parseString(rough_string)
+    res = '\n'.join([line for line in reparsed.toprettyxml(indent='  ').split('\n') if line.strip()])
+    print(res)
+    return res
+  bundle_name = technique_metadata["bundle_name"]
+  metadata_file = '/var/rudder/configuration-repository/techniques/ncf_techniques/'+bundle_name+"/1.0/metadata.xml"
+  metadata_tree = (xml.etree.ElementTree.parse(metadata_file)).getroot()
+  new_meta = '<AGENT type="dsc"><FILES><FILE name="RUDDER_CONFIGURATION_REPOSITORY/dsc/ncf/50_techniques/'+bundle_name+'.ps1"><INCLUDED>true</INCLUDED></FILE></FILES></AGENT>'
+  new_elem = xml.etree.ElementTree.fromstring(new_meta)
+  metadata_tree.append(new_elem)
+
+  #file = codecs.open(os.path.realpath(metadata_file), "w", encoding="utf-8")
+  prettify(metadata_tree)
+  #file.close()
+
+
 
 def usage():
   sys.stderr.write("Can't parse parameters\n")
