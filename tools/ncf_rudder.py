@@ -18,6 +18,7 @@ import sys
 import re
 import codecs
 import traceback
+import uuid
 from pprint import pprint
 
 # MAIN FUNCTIONS called by command line parsing
@@ -208,7 +209,8 @@ def generate_rudder_reporting(technique):
     key_value = ncf.get_key_value(method_call, generic_method)
 
     class_prefix = ncf.get_class_prefix(key_value, generic_method)
-    method_reporting = '"dummy_report" usebundle => ' + ncf.generate_reporting_context(generic_method, method_call) 
+    uuid_promiser = uuid.uuid1()
+    method_reporting = '"dummy_report_' + str(uuid_promiser) + '" usebundle => ' + ncf.generate_reporting_context(generic_method, method_call) 
     
     if not "cfengine-community" in generic_method["agent_support"]:
 
