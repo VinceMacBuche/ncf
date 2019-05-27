@@ -182,7 +182,7 @@ app.directive('popover', function() {
 });
 
 // Declare controller ncf-builder
-app.controller('ncf-builder', function ($scope, $uibModal, $http, $log, $location, $anchorScroll, ngToast, $timeout, focus, fileManagerConfig, apiMiddleware, fileNavigator) {
+app.controller('ncf-builder', function ($scope, $uibModal, $http, $log, $location, $anchorScroll, ngToast, $timeout, focus, fileManagerConfig, apiMiddleware, $window) {
   initScroll();
   console.log($scope.$$childHead);
   console.log($scope);
@@ -329,8 +329,21 @@ function updateFileManagerConf () {
     console.log("Hello!!" + $scope.selectedTechnique.name )
     return this.apiHandler.list(fileManagerConfig.listUrl + $scope.selectedTechnique.bundle_name +"/" + $scope.selectedTechnique.version +"/resources" , this.getPath(path), customDeferredHandler);
   };
-}
+  apiMiddleware.prototype.upload = function(files, path) {
+      if (! $window.FormData) {
+          throw new Error('Unsupported browser version');
+      }
 
+      var destination = this.getPath(path);
+
+      return this.apiHandler.upload(fileManagerConfig.uploadUrl+ $scope.selectedTechnique.bundle_name +"/" + $scope.selectedTechnique.version +"/resources", destination, files);
+  };
+
+  apiMiddleware.prototype.getContent = function(item) {
+    var itemPath = this.getFilePath(item);
+    return this.apiHandler.getContent(fileManagerConfig.getContentUrl + $scope.selectedTechnique.bundle_name +"/" + $scope.selectedTechnique.version +"/resources", itemPath);
+};
+}
 // Transform a ncf technique into a valid UI technique
 // Add original_index to the method call, so we can track their modification on index
 // Handle classes so we split them into OS classes (the first one only) and advanced classes
@@ -1399,9 +1412,6 @@ app.config(function($httpProvider,$locationProvider) {
     //Allows the browser to indicate to the cache to retrieve the GET request content from the original server rather than sending one he must keep.
     $httpProvider.defaults.headers.get['Pragma'] = 'no-cache';
 });
-console.log("ca m'énerve!")
-
-
 
 app.config(['fileManagerConfigProvider', function (config) {
   var apiPath = '/rudder/secure/api/ncf/';
