@@ -324,10 +324,12 @@ function defineMethodClassContext (method_call) {
 
 function updateFileManagerConf () {
 
+  var newUrl = '/rudder/secure/api/ncf/' + $scope.selectedTechnique.bundle_name +"/" + $scope.selectedTechnique.version +"/resources"
+
   console.log("Hello!!" + $scope.selectedTechnique.name )
   apiMiddleware.prototype.list = function(path, customDeferredHandler) {
     console.log("Hello!!" + $scope.selectedTechnique.name )
-    return this.apiHandler.list(fileManagerConfig.listUrl + $scope.selectedTechnique.bundle_name +"/" + $scope.selectedTechnique.version +"/resources" , this.getPath(path), customDeferredHandler);
+    return this.apiHandler.list(newUrl, this.getPath(path), customDeferredHandler);
   };
   apiMiddleware.prototype.upload = function(files, path) {
       if (! $window.FormData) {
@@ -336,13 +338,18 @@ function updateFileManagerConf () {
 
       var destination = this.getPath(path);
 
-      return this.apiHandler.upload(fileManagerConfig.uploadUrl+ $scope.selectedTechnique.bundle_name +"/" + $scope.selectedTechnique.version +"/resources", destination, files);
+      return this.apiHandler.upload(newUrl, destination, files);
   };
 
+
+  apiMiddleware.prototype.createFolder = function(item) {
+    var path = item.tempModel.fullPath();
+    return this.apiHandler.createFolder(newUrl, path);
+  };
   apiMiddleware.prototype.getContent = function(item) {
     var itemPath = this.getFilePath(item);
-    return this.apiHandler.getContent(fileManagerConfig.getContentUrl + $scope.selectedTechnique.bundle_name +"/" + $scope.selectedTechnique.version +"/resources", itemPath);
-};
+    return this.apiHandler.getContent(newUrl, itemPath);
+  };
 }
 // Transform a ncf technique into a valid UI technique
 // Add original_index to the method call, so we can track their modification on index
