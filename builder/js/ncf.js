@@ -350,6 +350,63 @@ function updateFileManagerConf () {
     var itemPath = this.getFilePath(item);
     return this.apiHandler.getContent(newUrl, itemPath);
   };
+
+  apiMiddleware.prototype.rename = function(item) {
+    var itemPath = this.getFilePath(item);
+    var newPath = item.tempModel.fullPath();
+
+    return this.apiHandler.rename(newUrl, itemPath, newPath);
+  };
+
+  apiMiddleware.prototype.remove = function(files) {
+    var items = this.getFileList(files);
+    return this.apiHandler.remove(newUrl, items);
+  };
+  apiMiddleware.prototype.edit = function(item) {
+    var itemPath = this.getFilePath(item);
+    return this.apiHandler.edit(newUrl, itemPath, item.tempModel.content);
+  };
+
+
+  apiMiddleware.prototype.copy = function(files, path) {
+    var items = this.getFileList(files);
+    var singleFilename = items.length === 1 ? files[0].tempModel.name : undefined;
+    return this.apiHandler.copy(newUrl, items, this.getPath(path), singleFilename);
+  };
+
+  apiMiddleware.prototype.changePermissions = function(files, dataItem) {
+    var items = this.getFileList(files);
+    var code = dataItem.tempModel.perms.toCode();
+    var octal = dataItem.tempModel.perms.toOctal();
+    var recursive = !!dataItem.tempModel.recursive;
+
+    return this.apiHandler.changePermissions(newUrl, items, code, octal, recursive);
+  };
+
+
+  apiMiddleware.prototype.move = function(files, path) {
+    var items = this.getFileList(files);
+    return this.apiHandler.move(newUrl, items, this.getPath(path));
+  };
+
+
+  apiMiddleware.prototype.download = function(item, forceNewWindow) {
+    //TODO: add spinner to indicate file is downloading
+    var itemPath = this.getFilePath(item);
+    var toFilename = item.model.name;
+
+    if (item.isFolder()) {
+        return;
+    }
+
+    return this.apiHandler.download(
+        newUrl,
+        itemPath,
+        toFilename,
+        fileManagerConfig.downloadFilesByAjax,
+        forceNewWindow
+    );
+  };
 }
 // Transform a ncf technique into a valid UI technique
 // Add original_index to the method call, so we can track their modification on index
