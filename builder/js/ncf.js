@@ -359,6 +359,7 @@ function updateFileManagerConf () {
   };
 
   apiMiddleware.prototype.remove = function(files) {
+    console.log(files)
     var items = this.getFileList(files);
     return this.apiHandler.remove(newUrl, items);
   };
@@ -1482,7 +1483,7 @@ app.config(['fileManagerConfigProvider', function (config) {
   var defaults = config.$get();
 
   	config.set({
-    appName : 'ncf',
+    appName : 'resources',
     listUrl             : apiPath,
     uploadUrl           : apiPath,
     renameUrl           : apiPath,
@@ -1497,10 +1498,13 @@ app.config(['fileManagerConfigProvider', function (config) {
     compressUrl         : apiPath,
     extractUrl          : apiPath,
     permissionsUrl      : apiPath,
+    isEditableFilePattern : /.*/,
     //tplPath             : baseUrl + '/templates/angular/filemanager',
     allowedActions: angular.extend(defaults.allowedActions, {
       compress: false,
       compressChooseName: false,
+      preview : true,
+      edit: true,
       extract: false
     })
   });
