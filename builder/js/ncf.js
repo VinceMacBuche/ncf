@@ -182,7 +182,7 @@ app.directive('popover', function() {
 });
 
 // Declare controller ncf-builder
-app.controller('ncf-builder', function ($scope, $uibModal, $http, $log, $location, $anchorScroll, ngToast, $timeout, focus, fileManagerConfig, apiMiddleware, $window) {
+app.controller('ncf-builder', function ($scope, $uibModal, $http, $q, $location, $anchorScroll, ngToast, $timeout, focus, fileManagerConfig, apiMiddleware, apiHandler, $window) {
   initScroll();
   console.log($scope.$$childHead);
   console.log($scope);
@@ -331,6 +331,33 @@ function updateFileManagerConf () {
     console.log("Hello!!" + $scope.selectedTechnique.name )
     return this.apiHandler.list(newUrl, this.getPath(path), customDeferredHandler);
   };
+
+
+  apiHandler.prototype.list = function(apiUrl, path, customDeferredHandler, exts) {
+    var self = this;
+    var dfHandler = customDeferredHandler || self.deferredHandler;
+    var deferred = $q.defer();
+    var data = {
+        action: 'list',
+        path: path,
+        fileExtensions: exts && exts.length ? exts : undefined
+    };
+
+    self.inprocess = true;
+    self.error = '';
+
+    $http.post(apiUrl, data).then(function(response) {
+        console.log(response.data)
+        $scope.selectedTechnique.resources = response.data.result
+        dfHandler(response.data, deferred, response.status);
+    }, function(response) {
+        dfHandler(response.data, deferred, response.status, 'Unknown error listing, check the response');
+    })['finally'](function() {
+        self.inprocess = false;
+    });
+    return deferred.promise;
+};
+
   apiMiddleware.prototype.upload = function(files, path) {
       if (! $window.FormData) {
           throw new Error('Unsupported browser version');
