@@ -324,39 +324,25 @@ function defineMethodClassContext (method_call) {
 
 function updateFileManagerConf () {
 
-  var newUrl = '/rudder/secure/api/ncf/' + $scope.selectedTechnique.bundle_name +"/" + $scope.selectedTechnique.version +"/resources"
+  var resourceUrl = '/rudder/secure/api/ncf/' + $scope.selectedTechnique.bundle_name +"/" + $scope.selectedTechnique.version +"/resources"
+  var newUrl =  "/rudder/secure/api/resourceExplorer/"+ $scope.selectedTechnique.bundle_name +"/" + $scope.selectedTechnique.version
 
+  console.log(resourceUrl)
+  $http.get(resourceUrl).then(
+    function(response) {
+      console.log(response.data.data.resources)
+      $scope.selectedTechnique.resources = response.data.data.resources
+    }
+  , function(response) {
+      console.log(response)
+    }
+  )
+  console.log(newUrl)
   console.log("Hello!!" + $scope.selectedTechnique.name )
   apiMiddleware.prototype.list = function(path, customDeferredHandler) {
     console.log("Hello!!" + $scope.selectedTechnique.name )
     return this.apiHandler.list(newUrl, this.getPath(path), customDeferredHandler);
   };
-
-
-  apiHandler.prototype.list = function(apiUrl, path, customDeferredHandler, exts) {
-    var self = this;
-    var dfHandler = customDeferredHandler || self.deferredHandler;
-    var deferred = $q.defer();
-    var data = {
-        action: 'list',
-        path: path,
-        fileExtensions: exts && exts.length ? exts : undefined
-    };
-
-    self.inprocess = true;
-    self.error = '';
-
-    $http.post(apiUrl, data).then(function(response) {
-        console.log(response.data)
-        $scope.selectedTechnique.resources = response.data.result
-        dfHandler(response.data, deferred, response.status);
-    }, function(response) {
-        dfHandler(response.data, deferred, response.status, 'Unknown error listing, check the response');
-    })['finally'](function() {
-        self.inprocess = false;
-    });
-    return deferred.promise;
-};
 
   apiMiddleware.prototype.upload = function(files, path) {
       if (! $window.FormData) {
