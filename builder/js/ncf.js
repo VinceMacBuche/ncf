@@ -337,6 +337,38 @@ function updateFileManagerConf () {
       console.log(response)
     }
   )
+
+  apiHandler.prototype.deferredHandler = function(data, deferred, code, defaultMsg) {
+    $http.get(resourceUrl).then(
+      function(response) {
+        console.log(response.data.data.resources)
+        $scope.selectedTechnique.resources = response.data.data.resources
+      }
+    , function(response) {
+        console.log(response)
+      }
+    )
+
+    if (!data || typeof data !== 'object') {
+        this.error = 'Error %s - Bridge response error, please check the API docs or this ajax response.'.replace('%s', code);
+    }
+    if (code == 404) {
+        this.error = 'Error 404 - Backend bridge is not working, please check the ajax response.';
+    }
+    if (data.result && data.result.error) {
+        this.error = data.result.error;
+    }
+    if (!this.error && data.error) {
+        this.error = data.error.message;
+    }
+    if (!this.error && defaultMsg) {
+        this.error = defaultMsg;
+    }
+    if (this.error) {
+        return deferred.reject(data);
+    }
+    return deferred.resolve(data);
+};
   console.log(newUrl)
   console.log("Hello!!" + $scope.selectedTechnique.name )
   apiMiddleware.prototype.list = function(path, customDeferredHandler) {

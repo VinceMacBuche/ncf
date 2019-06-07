@@ -331,7 +331,7 @@
                           <div class="input-group col-sm-12">
                             <input  type="text" class="form-control" readonly ng-model="resource.name" >
                             <span class="input-group-addon">Use with:</span>
-                            <input readonly class="form-control" ng-model="'${'+getBundleName(resource.name)+'}'" placeHolder="Value in methods">
+                            <input readonly class="form-control" ng-model="'${'+getBundleName(resource.name)+'} - ' + resource.state " placeHolder="Value in methods">
                           </div>
                         </div>
                         <button class="btn" ng-click="openEditor = !openEditor">open the bidule</button> {{openEditor}}
