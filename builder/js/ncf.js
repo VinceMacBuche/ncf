@@ -321,13 +321,9 @@ function defineMethodClassContext (method_call) {
     }
   }
 }
-
-function updateFileManagerConf () {
-
+function updateResources() {
   var resourceUrl = '/rudder/secure/api/ncf/' + $scope.selectedTechnique.bundle_name +"/" + $scope.selectedTechnique.version +"/resources"
-  var newUrl =  "/rudder/secure/api/resourceExplorer/"+ $scope.selectedTechnique.bundle_name +"/" + $scope.selectedTechnique.version
 
-  console.log(resourceUrl)
   $http.get(resourceUrl).then(
     function(response) {
       console.log(response.data.data.resources)
@@ -337,17 +333,15 @@ function updateFileManagerConf () {
       console.log(response)
     }
   )
+}
+function updateFileManagerConf () {
+
+  var newUrl =  "/rudder/secure/api/resourceExplorer/"+ $scope.selectedTechnique.bundle_name +"/" + $scope.selectedTechnique.version
+
+  updateResources()
 
   apiHandler.prototype.deferredHandler = function(data, deferred, code, defaultMsg) {
-    $http.get(resourceUrl).then(
-      function(response) {
-        console.log(response.data.data.resources)
-        $scope.selectedTechnique.resources = response.data.data.resources
-      }
-    , function(response) {
-        console.log(response)
-      }
-    )
+    updateResources()
 
     if (!data || typeof data !== 'object') {
         this.error = 'Error %s - Bridge response error, please check the API docs or this ajax response.'.replace('%s', code);
@@ -542,6 +536,7 @@ $scope.getSessionStorage = function(){
             $scope.originalTechnique = existingTechnique;
             if (doSave) {
               $scope.selectedTechnique = angular.copy($scope.originalTechnique);
+              updateFileManagerConf();
               $scope.resetFlags();
             }else{
               $scope.keepChanges();
@@ -1327,6 +1322,8 @@ $scope.onImportFileChange = function (fileEl) {
           // We will lose the link between the selected method and the technique, to prevent unintended behavior, close the edit method panel
           $scope.selectedMethod = undefined;
         }
+
+        updateResources();
         $scope.resetFlags();
       }
 
