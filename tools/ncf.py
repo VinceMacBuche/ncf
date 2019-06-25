@@ -16,7 +16,6 @@ import shutil
 import sys
 import os
 import codecs
-import ncf_constraints
 import uuid
 from pprint import pprint
 
@@ -99,43 +98,38 @@ def check_output(command, env = {}):
   return output
 
 
-def get_all_generic_methods_filenames(alt_path = ''):
+def get_all_generic_methods_filenames():
   result = []
   filelist1 = get_all_generic_methods_filenames_in_dir(get_root_dir() + "/tree/30_generic_methods")
-  filelist2 = []
-  if alt_path == '':
-    filelist2 = []
-  else:
-    filelist2 = get_all_generic_methods_filenames_in_dir(alt_path + "/30_generic_methods")
+  filelist2 = get_all_generic_methods_filenames_in_dir("/var/rudder/configuration-repository/30_generic_methods")
   result = filelist1 + filelist2
 
   return result
 
 
 def get_all_generic_methods_filenames_in_dir(dir):
-  return get_all_cf_filenames_under_dir(dir)
+  return get_all_cf_filenames_under_dir(dir, False)
 
 
-def get_all_techniques_filenames(alt_path = ''):
-  result = []
-  filelist1 = get_all_cf_filenames_under_dir(get_root_dir() + "/tree/50_techniques")
-  filelist2 = []
-  if alt_path == '':
-    filelist2 = []
+def get_all_techniques_filenames(migrate_technique = False):
+  basePath = "/var/rudder/configuration-repository"
+  if migrate_technique:
+    path = os.path.join(basePath,"ncf/50_techniques")
   else:
-    path = os.path.join(alt_path,"50_techniques")
-    filelist2 = get_all_cf_filenames_under_dir(path)
-  result = filelist1 + filelist2
+    path = os.path.join(basePath,"techniques/ncf_techniques")
 
-  return result
+  return get_all_cf_filenames_under_dir(path, not migrate_technique)
 
 
-def get_all_cf_filenames_under_dir(dir):
+def get_all_cf_filenames_under_dir(dir, only_technique_cf):
   filenames = []
   filenames_add = filenames.append
   for root, dirs, files in os.walk(dir):
     for file in files:
-      if not file.startswith("_") and file.endswith(".cf"):
+      if only_technique_cf:
+        if file == "technique.cf":
+          filenames_add(os.path.join(root, file))
+      elif  not file.startswith("_") and file.endswith(".cf"):
         filenames_add(os.path.join(root, file))
   return filenames
 
@@ -154,6 +148,12 @@ def parse_bundlefile_metadata(content, bundle_type):
   parameters = []
   param_names = set()
   param_constraints = {}
+  default_constraint = {
+    "allow_whitespace_string" : False
+  , "allow_empty_string" : False
+  , "max_length" : 16384
+  }
+
   multiline = False
   previous_tag = None
   match_line = ""
@@ -180,7 +180,7 @@ def parse_bundlefile_metadata(content, bundle_type):
         if tag == "parameter_constraint":
           constraint = json.loads("{" + match.group(4)+ "}")
           # extend default_constraint if it was not already defined)
-          param_constraints.setdefault(match.group(3), ncf_constraints.default_constraint.copy()).update(constraint)
+          param_constraints.setdefault(match.group(3), default_constraint.copy()).update(constraint)
         else:
           res[tag] = match.group(2)
         previous_tag = tag
@@ -238,11 +238,7 @@ def parse_bundlefile_metadata(content, bundle_type):
   if len(parameters) > 0:
     for param in parameters:
       parameter_name = param["name"]
-      constraints = param_constraints.get(param["name"], ncf_constraints.default_constraint)
-      for key, constraint in constraints.items():
-        check = ncf_constraints.check_constraint_type(key, constraint)
-        if not check['result']:
-          raise NcfError("Value for constraint '" + key + "' of parameter '"+ param['name'] +"' is not valid, "+", ".join(check["errors"]))
+      constraints = param_constraints.get(param["name"], default_constraint)
       param["constraints"] = constraints
 
   res['parameter'] = parameters
@@ -352,7 +348,7 @@ def parse_technique_methods(technique_file, gen_methods):
           if attribute['rval']['type'] == 'string':
             method_name = attribute['rval']['value']
         # Extract class context from 'ifvarclass'
-        elif attribute['lval'] == 'ifvarclass':
+        elif attribute['lval'] == 'ifvarclass' or attribute['lval'] == 'if':
           # Simple string get its value
           if attribute['rval']['type'] == 'string':
             ifvarclass_context = attribute['rval']['value']
@@ -422,22 +418,15 @@ def execute_hooks(prefix, action, path, bundle_name):
     hookfile = os.path.join(hooks_path,hook)
     check_output([hookfile,path,bundle_name])
 
-
-
-
-
-
 # FUNCTIONS called directly by the API code
 ###########################################
 
-def get_all_techniques_metadata(include_methods_calls = True, alt_path = ''):
-  methods_data = get_all_generic_methods_metadata(alt_path)
+def get_all_techniques_metadata(include_methods_calls = True, migrate_technique = False):
+  methods_data = get_all_generic_methods_metadata()
   methods = methods_data["data"]["generic_methods"]
   all_metadata = {}
 
-  if alt_path != '': sys.stderr.write("INFO: Alternative source path added: %s\n" % alt_path)
-
-  filenames = get_all_techniques_filenames(alt_path)
+  filenames = get_all_techniques_filenames(migrate_technique)
   method_errors = methods_data["errors"]
   warnings = methods_data["warnings"]
   errors = []
@@ -473,10 +462,10 @@ def get_agents_support(method, content):
     agents.append("cfengine-community")
   return agents
 
-def get_all_generic_methods_metadata(alt_path = ''):
+def get_all_generic_methods_metadata():
   all_metadata = {}
 
-  filenames = get_all_generic_methods_filenames(alt_path)
+  filenames = get_all_generic_methods_filenames()
   errors = []
   warnings = []
 
@@ -498,17 +487,14 @@ def get_all_generic_methods_metadata(alt_path = ''):
 
 
 
-def delete_technique(technique_name, alt_path=""):
+def delete_technique(technique_name):
   """Delete a technique directory contained in a path"""
-  if alt_path == "":
-    path = os.path.join(get_root_dir(),"tree")
-  else:
-    path = alt_path
+  path = os.path.join("/var/rudder/configuration-repository/techniques/ncf_techniques", technique_name)
   try:
     # Execute pre hooks
     execute_hooks("pre", "delete_technique", path, technique_name)
     # Delete technique file
-    filename = os.path.realpath(os.path.join(path, "50_techniques", technique_name))
+    filename = os.path.realpath()
     shutil.rmtree(filename)
     # Execute post hooks
     execute_hooks("post", "delete_technique", path, technique_name)
