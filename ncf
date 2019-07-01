@@ -97,13 +97,13 @@ if __name__ == '__main__':
   elif sys.argv[1] == "write_technique":
     write_techniques(sys.argv[2],sys.argv[3])
   elif sys.argv[1] == "get_all_techniques":
-     print(json.dumps(ncf.get_all_techniques_metadata(False, "/var/rudder/configuration-repository")['data']['techniques']))
+     print(json.dumps(ncf.get_all_techniques_metadata(True, "/var/rudder/configuration-repository/ncf")['data']['techniques']))
   elif sys.argv[1] == "get_technique":
-     print(json.dumps(ncf.get_all_techniques_metadata(False, "/var/rudder/configuration-repository")['data']['techniques'][sys.argv[2]]))
+     print(json.dumps(ncf.get_all_techniques_metadata(True, "/var/rudder/configuration-repository/ncf")['data']['techniques'][sys.argv[2]]))
   elif sys.argv[1] == "get_all_methods":
-     print(json.dumps(ncf.get_all_generic_methods_metadata("/var/rudder/configuration-repository")["data"]["generic_methods"]))
+     print(json.dumps(ncf.get_all_generic_methods_metadata("/var/rudder/configuration-repository/ncf")["data"]["generic_methods"]))
   elif sys.argv[1] == "get_method":
-     print(json.dumps(ncf.get_all_generic_methods_metadata("/var/rudder/configuration-repository")["data"]["generic_methods"][sys.argv[2]]))
+     print(json.dumps(ncf.get_all_generic_methods_metadata("/var/rudder/configuration-repository/ncf")["data"]["generic_methods"][sys.argv[2]]))
 
 
   else:
