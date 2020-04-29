@@ -448,8 +448,8 @@ def get_all_techniques_metadata(include_methods_calls = True, migrate_technique 
       all_metadata[metadata['bundle_name']] = metadata
 
     except NcfError as e:
-      bundle_name = os.path.splitext(os.path.basename(file))[0]
-      error = NcfError("Could not parse Technique '"+ bundle_name+ "'", cause=e)
+      file_abs_path = os.path.abspath(file)
+      error = NcfError("Could not parse Technique file '"+ file_abs_path + "'", cause=e)
       errors.append(error)
       continue # skip this file, it doesn't have the right tags in - yuk!
 
